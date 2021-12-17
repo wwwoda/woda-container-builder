@@ -1,0 +1,57 @@
+name: Check Build
+
+on: [pull_request]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    container:
+      image: eventjet/checks-7.4:latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: SSH agent
+        uses: webfactory/ssh-agent@v0.4.1
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Prepare environment
+        run: |
+          composer config http-basic.woda.repo.repman.io token ${{ secrets.SATIS_PASSWORD }}
+          mkdir -p /root/.ssh
+          ssh-keyscan -t rsa github.com >> /root/.ssh/known_hosts
+          echo "COMPOSER_CACHE=$(composer config cache-dir)" >> $GITHUB_ENV
+
+      - name: Composer Cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ${{ env.COMPOSER_CACHE }}
+            vendor
+          key: ${{ runner.os }}-composer
+
+      - name: Install dependencies
+        run: |
+          composer install --no-progress --no-suggest --no-interaction > /dev/null
+
+      - name: Static analysis
+        run: |
+          composer check-deps
+          composer cs-check
+          composer phpstan -- --no-progress
+
+      - name: Tests
+        run: |
+          vendor/bin/phpunit --coverage-clover=coverage.xml --stop-on-failure
+
+      - name: Monitor coverage
+        if: github.event_name == 'pull_request'
+        uses: slavcodev/coverage-monitor-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          clover_file: "coverage.xml"
+          threshold_alert: 99
+          threshold_warning: 99
