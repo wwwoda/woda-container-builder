@@ -8,8 +8,9 @@ _Create a PSR-11 dependency injection container with laminas-servicemanager and 
 
 - [woda/container-builder](#wodacontainer-builder)
   - [Table of Contents](#table-of-contents)
-  - [What it's about (technical explanation)](#what-its-about-technical-explanation)
+  - [Summary](#summary)
   - [Why you should use it?](#why-you-should-use-it)
+  - [Technical Details](#technical-details)
   - [Usage (in a WordPress theme)](#usage-in-a-wordpress-theme)
     - [Installation](#installation)
     - [Setup](#setup)
